@@ -1,5 +1,7 @@
 from random import random
 import numpy as np
+from itertools import product
+from math import sin
 
 def sigmoid(x):
 	return 1 / (1 + np.exp(-x))
@@ -8,8 +10,9 @@ def d_sigmoid(y):
 	return y * (1 - y)
 
 class NeuralNetwork(object):
-	def __init__(self, layer_sizes, seed=None):
+	def __init__(self, layer_sizes, alpha = 0.7, seed=None):
 		state = np.random.RandomState(seed)
+		self.alpha = alpha
 		self.weights = [state.uniform(-0.5, 0.5, size)
 						for size in zip(layer_sizes[:-1], layer_sizes[1:])]
 		self.layer_sizes = layer_sizes
@@ -20,16 +23,18 @@ class NeuralNetwork(object):
 		for i in self.weights:
 			copy.weights.append(i+0)
 		return copy
-
 	def mutate(self, mutationRate):
-		for x in range(len(self.weights)):
-			for row in range(len(self.weights[x])):
-				for column in range(len(self.weights[x][row])):
-					if random() < mutationRate:
-						self.weights[x][row][column] = random()
-					else:
-						pass
-
+		if abs(mutationRate-1) < 0.000001:
+			for x in range(len(self.weights)):
+				self.weights[x] = np.random.rand(self.weights[x].shape[0], self.weights[x].shape[1])
+		elif mutationRate > 0.0:
+			for x in range(len(self.weights)):
+				for row in range(len(self.weights[x])):
+					for column in range(len(self.weights[x][row])):
+						if random() < mutationRate:
+							self.weights[x][row][column] = random()
+						else:
+							pass
 	def __add__(self, other):
 		if self.layer_sizes == other.layer_sizes:
 			baby = NeuralNetwork(self.layer_sizes)
@@ -69,3 +74,15 @@ class NeuralNetwork(object):
 		for layer in self._feed_forward(i): pass
 		return layer
 
+OR = NeuralNetwork([1, 10, 10, 1])
+
+print(sin(1), sin(0), sin(0.5))
+for i in range(100):
+	T = []
+	for z in range(100):
+		p = random()
+		T.append((p, sin(p)))
+	OR.train(T)
+	print(sin(1), sin(0), sin(0.5))
+	print(i, OR.predict([1]), OR.predict([0]), OR.predict([0.5]))
+print(sin(1), sin(0), sin(0.5))
