@@ -24,7 +24,15 @@ def keyReleased(key, unicode, time):
 	pass
 
 def mouseClicked(x, y, button):
-	pass
+	global runTime
+	if button == 2:
+		print(x-200, y)
+	elif button == 1:
+
+		runTime = 1000
+	elif button == 3:
+		
+		runTime = 1/60
 def mouseDragged(drag, button):
 	print(drag)
 	st = PVector(drag[0][0]-200, drag[0][1])
@@ -46,18 +54,22 @@ def init():
 	global spawn, goal 
 	W = int((width - 200)*3/4)
 	H = int(height*5/6)
-	spawn = PVector(W/2, H/2)
+	spawn = PVector(W/2, H-50)
 	goal = PVector(W/2, 50)
 	pop = Population(200, spawn, goal)
 	walls = []
 
 
 def run():
-	pop.update(walls)
+	w = walls.copy()
+	w.append([PVector(0,0), PVector(int((width - 200)*3/4), 0)])
+	w.append([PVector(0,0), PVector(0,int(height*5/6))])
+	w.append([PVector(int((width - 200)*3/4),0), PVector(int((width - 200)*3/4),int(height*5/6))])
+	w.append([PVector(0,int(height*5/6)), PVector(int((width - 200)*3/4),int(height*5/6))])
+	pop.update(w)
 	if pop.nextGen:
 		pop.naturalSelction()
-		pop.createMoreDots()
-		pop.mutateThemBabies()
+		pop.mutateDemBabies()
 	## Run an update on every dot
 	## 1st - Take in inputs
 	## 2nd - Run through the neural net
@@ -122,7 +134,7 @@ if __name__ == "__main__":
 	frameRate = 60
 	frameTime = 1/frameRate
 	lFrame = 0
-	runRate = 60
+	runRate = 120
 	runTime = 1/runRate
 	lRun = 0
 	## Create Settings Variable

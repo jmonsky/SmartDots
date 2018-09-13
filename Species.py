@@ -33,6 +33,13 @@ class Brain(object):
 	def mutate(self, mr):
 		self.network.mutate(mr)
 
+	def copy(self):
+		baby = Brain()
+		baby.species = self.species
+		baby.speciesString = self.speciesString
+		baby.network = self.network.copy()
+		return baby
+
 	def setInputs(self, arr):
 		if len(arr) != len(self.inputs):
 			raise Exception("Input array needs to match avaliable inputs: %d != %d" % (len(self.inputs), len(arr)))
@@ -56,3 +63,7 @@ if __name__ == "__main__":
 	test.setInputs([1,2,3,4,5,6,7,8,9,10,11,12,13])
 	test.run()
 	print(test.getOutputs())
+	test2 = test.copy()
+	print(test.network.weights[0])
+	print(test2.network.weights[0])
+	print(test2.network.copy().weights[0])

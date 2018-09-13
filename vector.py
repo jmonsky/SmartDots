@@ -39,7 +39,7 @@ class PVector(object):
 		return PVector(self.x, self.y)
 
 	def __str__(self):
-		return str((self.x, self.y))
+		return "Vector["+str((self.x, self.y))+"]"
 
 	def __getitem__(self, x):
 		if x == 0:

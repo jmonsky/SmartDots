@@ -33,8 +33,6 @@ class NeuralNetwork(object):
 					for column in range(len(self.weights[x][row])):
 						if random() < mutationRate:
 							self.weights[x][row][column] = random()
-						else:
-							pass
 	def __add__(self, other):
 		if self.layer_sizes == other.layer_sizes:
 			baby = NeuralNetwork(self.layer_sizes)
