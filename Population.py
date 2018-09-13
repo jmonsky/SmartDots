@@ -45,12 +45,14 @@ class Population(object):
 
 		self.getFitness()
 		newDots = []
-		bestDot = self.getBest().copy()
+		bestDot = self.getBest().exactCopy()
+		if bestDot.reachedGoal:
+			self.maxSteps = bestDot.steps
 		randos = int(self.randoPerc * len(self.dots))
 		babies = int(self.babyPerc * len(self.dots))
 		survivors = len(self.dots) - randos - babies - 1
 		for x in range(survivors):
-			newDots.append(self.getParent().copy())
+			newDots.append(self.getParent().exactCopy())
 		for x in range(babies):
 			newDots.append(self.getParent().gimmieBaby())
 		for x in range(randos):
@@ -85,7 +87,7 @@ class Population(object):
 			runningSum += i.fitness
 			if runningSum < random():
 				return i
-		return None
+		return self.getBest()
 
 	def allDotsDead(self):
 		for i in self.dots:

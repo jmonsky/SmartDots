@@ -24,17 +24,8 @@ def keyReleased(key, unicode, time):
 	pass
 
 def mouseClicked(x, y, button):
-	global runTime
-	if button == 2:
-		print(x-200, y)
-	elif button == 1:
-
-		runTime = 1000
-	elif button == 3:
-		
-		runTime = 1/60
+	pass
 def mouseDragged(drag, button):
-	print(drag)
 	st = PVector(drag[0][0]-200, drag[0][1])
 	sp = PVector(drag[1][0]-200, drag[1][1])
 	if st.x > 0 and st.x < int((width - 200)*3/4) and st.y > 0 and st.y < int(height*5/6):
@@ -61,20 +52,18 @@ def init():
 
 
 def run():
+	## Create Imaginary walls along the border of the map to kill off idiots
 	w = walls.copy()
 	w.append([PVector(0,0), PVector(int((width - 200)*3/4), 0)])
 	w.append([PVector(0,0), PVector(0,int(height*5/6))])
 	w.append([PVector(int((width - 200)*3/4),0), PVector(int((width - 200)*3/4),int(height*5/6))])
 	w.append([PVector(0,int(height*5/6)), PVector(int((width - 200)*3/4),int(height*5/6))])
+	## Run the update on the population
 	pop.update(w)
+	## Check if its time to move to the next generation
 	if pop.nextGen:
 		pop.naturalSelction()
 		pop.mutateDemBabies()
-	## Run an update on every dot
-	## 1st - Take in inputs
-	## 2nd - Run through the neural net
-	## 3rd - Use outputs to move dot
-
 
 def draw(surface):
 	## Cut up the screen
@@ -134,7 +123,7 @@ if __name__ == "__main__":
 	frameRate = 60
 	frameTime = 1/frameRate
 	lFrame = 0
-	runRate = 120
+	runRate = 1000
 	runTime = 1/runRate
 	lRun = 0
 	## Create Settings Variable

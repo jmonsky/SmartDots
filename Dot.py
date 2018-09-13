@@ -12,7 +12,8 @@ class Dot(object):
 		self.pos = spawn
 		self.vel = PVector(0,0)
 		self.acc = PVector(0,0)
-		self.angle = 0
+		self.startingangle = randint(0,360)
+		self.angle = self.startingangle
 		self.dead = False
 		self.steps = 0
 		self.sight = PVector(10, 0)
@@ -21,15 +22,23 @@ class Dot(object):
 		self.mutateMe = False
 		self.spawn = spawn
 		self.isBest = False
+		self.radius = 4
+		self.color = (0,0,0)
+		self.pickedColor = (0,0,255)
+		self.bestColor = (0,255,0)
 
 	def show(self, surface):
 		if not self.isBest:
-			circle(surface, (0,0,0), (int(self.pos.x), int(self.pos.y)), 4)
+			circle(surface, self.color, (int(self.pos.x), int(self.pos.y)), self.radius)
 		else:
-			circle(surface, (0,255,0), (int(self.pos.x), int(self.pos.y)), 7)
+			circle(surface, self.bestColor, (int(self.pos.x), int(self.pos.y)), int(self.radius*1.5))
 		circle(surface, (255,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle)).x), int(self.pos.y+self.sight.rotate(radians(self.angle)).y)), 2)
 		##circle(surface, (0,255,0), (int(self.pos.x+self.acc.rotate(radians(self.angle)).x), int(self.pos.y+self.acc.rotate(radians(self.angle)).y)), 2)
 		##circle(surface, (0,0,255), (int(self.pos.x+self.vel.rotate(radians(self.angle)).x), int(self.pos.y+self.vel.rotate(radians(self.angle)).y)), 2)
+
+	def showSelection(self, surface):
+		w = surface.get_width()
+		h = surface.get_height()
 
 	def update(self, sensoryData):
 		## Take in sensory data and create the vector for it
@@ -63,6 +72,13 @@ class Dot(object):
 		baby.speciesString = self.speciesString
 		return baby
 
+	def exactCopy(self):
+		baby = self.copy()
+		baby.angle = self.startingangle
+		baby.startingangle = self.startingangle
+		baby.radius = self.radius
+		return baby
+
 	def setParent(self, parent):
 		self.parentSpecies = parent.species
 		self.parentSpeciesString = parent.speciesString
@@ -89,6 +105,6 @@ class Dot(object):
 		distToGoal = dist(goal, self.pos)
 		distToSpawn = dist(self.spawn, self.pos)
 		if self.reachedGoal:
-			self.fitness = 1000*(1/0.001) + 1000.0*(1/(self.steps**2))
+			self.fitness = 1000.0*(1/(self.steps**2))
 		else:
-			self.fitness = 1.0/(distToGoal**2) - 1.0/(distToSpawn**2)
+			self.fitness = 1.0/(distToGoal**2)
