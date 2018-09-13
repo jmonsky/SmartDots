@@ -18,7 +18,7 @@ class Population(object):
 		self.nextGen = False
 		self.mutationRate = 0.05
 		self.randoPerc = 0.05
-		self.babyPerc = 0.45
+		self.babyPerc = 0.80
 
 	def show(self, infoSurface, dotSurface):
 		if self.step/self.maxSteps > 0.25 and self.step/self.maxSteps < 0.30:
