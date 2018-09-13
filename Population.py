@@ -16,7 +16,7 @@ class Population(object):
 		self.step = 0
 		self.fitnessSum = 0
 		self.nextGen = False
-		self.mutationRate = 0.05
+		self.mutationRate = 0.001
 		self.randoPerc = 0.05
 		self.babyPerc = 0.80
 

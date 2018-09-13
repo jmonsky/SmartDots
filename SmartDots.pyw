@@ -16,6 +16,7 @@ def setIcon(R, G, B):
 def blitText(surface, text, pos, color=(0,0,0), textSize=15, font="Arial"):
 	surface.blit(pygame.font.SysFont(font, textSize).render(text, True, color), pos)
 
+
 def keyPressed(key, unicode):
 	pass
 def keyHeld(key, unicode, time):
