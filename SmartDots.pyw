@@ -5,8 +5,8 @@ from mouse import *
 from vector import *
 from random import randrange, randint, random
 from colorsys import hsv_to_rgb
-
-from NeuralNetwork import NeuralNetwork
+from Species import generateSpecies
+from Population import Population
 
 def setIcon(R, G, B):
 	icon = pygame.Surface((32, 32))
@@ -26,7 +26,12 @@ def keyReleased(key, unicode, time):
 def mouseClicked(x, y, button):
 	pass
 def mouseDragged(drag, button):
-	pass
+	print(drag)
+	st = PVector(drag[0][0]-200, drag[0][1])
+	sp = PVector(drag[1][0]-200, drag[1][1])
+	if st.x > 0 and st.x < int((width - 200)*3/4) and st.y > 0 and st.y < int(height*5/6):
+		if sp.x > 0 and sp.x < int((width - 200)*3/4) and sp.y > 0 and sp.y < int(height*5/6): 
+			walls.append((st, sp))
 def mouseReleased(x, y, button):
 	pass
 def mousePressed(x, y, button):
@@ -36,10 +41,23 @@ def mouseMoved(x, y, dy, dx, button):
 
 
 def init():
-	pass
+	global walls, walls, pop
+	generateSpecies(settings["Species Count"])
+	global spawn, goal 
+	W = int((width - 200)*3/4)
+	H = int(height*5/6)
+	spawn = PVector(W/2, H/2)
+	goal = PVector(W/2, 50)
+	pop = Population(200, spawn, goal)
+	walls = []
+
 
 def run():
-	pass
+	pop.update(walls)
+	if pop.nextGen:
+		pop.naturalSelction()
+		pop.createMoreDots()
+		pop.mutateThemBabies()
 	## Run an update on every dot
 	## 1st - Take in inputs
 	## 2nd - Run through the neural net
@@ -47,37 +65,70 @@ def run():
 
 
 def draw(surface):
-	surface.fill((255,255,255))
+	## Cut up the screen
+	drawWidth = int((width - 200)*3/4)
+	statWidth = int(width*3/4)
+	height1 = int(height*5/6)
+	height2 = height - height1
+	## Create the surfaces
+	StatSurface = pygame.Surface((statWidth, height2))
+	ControlSurface = pygame.Surface((width-statWidth, height2))
+	DrawSurface = pygame.Surface((drawWidth, height1))
+	MapEditSurface = pygame.Surface((200, height1))
+	InfoSurface = pygame.Surface((width-drawWidth-200, height1))
+	## Fill the surface's backgrounds
+	StatSurface.fill((255,0,0))
+	ControlSurface.fill((0,255,0))
+	DrawSurface.fill((255,255,255))
+	MapEditSurface.fill((0,0,255))
+	InfoSurface.fill((255,0,255))
+	surface.fill((0,0,0))
 	## Draw the Dots
+	pop.show(InfoSurface, DrawSurface)
 
 	## Draw the obstacles
-
+	for w in walls:
+		pygame.draw.line(DrawSurface, (0,0,255), w[0], w[1], 2)
+	## Draw the goal and spawn
+	pygame.draw.circle(DrawSurface, (255,0,0), (int(goal.x), int(goal.y)), 5)
+	pygame.draw.circle(DrawSurface, (0,0,255), (int(spawn.x), int(spawn.y)), 5)
 	## Draw the Overlay
+	
+	
 
-	## Draw the gui
+	## Blit the surfaces to the screen
+	surface.blit(StatSurface, (0, height1))
+	surface.blit(ControlSurface, (statWidth, height1))
+	surface.blit(DrawSurface, (200, 0))
+	surface.blit(MapEditSurface, (0, 0))
+	surface.blit(InfoSurface, (drawWidth+200, 0))	
 	return surface
 
 
 if __name__ == "__main__":
-	size = width, height = 800, 800
+	## Create the screen
+	size = width, height = 1200, 800
 	SCREENSIZE = PVector(width, height)
 	pygame.init()
 	pygame.display.set_mode(size, RESIZABLE)
 	pygame.display.set_caption("Smart Dots")
 	setIcon(255,0,0)
-
+	## Create the mouse tracker / key trackers
 	mouse = Mouse()
 	mouse.setFunctions(mouseClicked, mouseDragged, mouseMoved, mousePressed, mouseReleased)
 	keysDown = dict()
 	unicodes = dict()
-
+	## Create the timer variables
 	frameRate = 60
 	frameTime = 1/frameRate
 	lFrame = 0
 	runRate = 60
 	runTime = 1/runRate
 	lRun = 0
+	## Create Settings Variable
+	settings = {"Species Count":20}
 
+	## Run the init function
 	init()
 	while 1:
 		## Run the clock stuff
@@ -104,6 +155,14 @@ if __name__ == "__main__":
 				SCREENSIZE.y = height
 				size = (width, height)
 				pygame.display.set_mode((width, height), RESIZABLE)
+				if width < 800:
+					width = 800
+					SCREENSIZE.x = width
+					pygame.display.set_mode((width, height), RESIZABLE)
+				if height < 600:
+					height = 600
+					SCREENSIZE.y = height
+					pygame.display.set_mode((width, height), RESIZABLE)
 			if event.type == MOUSEMOTION:
 				mouse.move(event.pos[0], event.pos[1])
 			if event.type == MOUSEBUTTONDOWN:

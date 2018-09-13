@@ -1,4 +1,6 @@
-from math import atan2, cos, sin, fabs, radians, degrees
+from math import atan2, cos, sin, fabs, radians, degrees, sqrt
+import numpy as np
+from numpy.linalg import norm
 
 class PVector(object):
 	def __init__(self, x=0, y=0):
@@ -9,8 +11,11 @@ class PVector(object):
 		if isinstance(otherV, PVector):
 			return PVector(self.x+otherV.x, self.y+otherV.y)
 
+	def __sub__(self, otherV):
+		if isinstance(otherV, PVector):
+			return PVector(self.x-otherV.x, self.y-otherV.y)
 	def mag(self):
-		return ((self.x)**2+(self.y)**2)**0.5
+		return sqrt((self.x)**2+(self.y)**2)
 
 	def angle(self):
 		return atan2(self.y, self.x)
@@ -25,6 +30,10 @@ class PVector(object):
 		self.x = cos(dir)*mag
 		self.y = sin(dir)*mag
 		return self
+
+
+	def rotate(self, angle):
+		return PVector().byMag(self.mag(), self.angle()+angle)
 
 	def copy(self):
 		return PVector(self.x, self.y)
@@ -43,6 +52,12 @@ class PVector(object):
 	def __len__(self):
 		return 2
 
+	def toNP(self):
+		return np.array([self.x, self.y])
+
+def dist(p1, p2):
+	return sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2)
+
 def ccw(A,B,C):
     return (C.y-A.y) * (B.x-A.x) > (B.y-A.y) * (C.x-A.x)
 
@@ -50,9 +65,15 @@ def ccw(A,B,C):
 def intersect(A,B,C,D):
     return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
 
-for D in range(0, 900):
-	person = PVector(0,0)
-	sight = PVector().byMag(15, radians(D/10))
-	randomTangentStart = PVector(0,20)
-	randomTangentEnd = PVector(20,0)
-	print(D/10, intersect(person, person+sight, randomTangentStart, randomTangentEnd))
+def findDist(point, line):
+	p1 = line[0].toNP()
+	p2 = line[1].toNP()
+	p3 = point.toNP()
+	return np.cross(p2-p1,p3-p1)/norm(p2-p1)
+
+if __name__ == "__main__":
+	test2 = PVector(10, 10)
+	print(degrees(test2.angle()))
+	test3 = test2.rotate(radians(90))
+	print(degrees(test3.angle()))
+	print(test3.x, test3.y)

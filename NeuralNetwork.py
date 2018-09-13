@@ -74,15 +74,7 @@ class NeuralNetwork(object):
 		for layer in self._feed_forward(i): pass
 		return layer
 
-OR = NeuralNetwork([1, 10, 10, 1])
-
-print(sin(1), sin(0), sin(0.5))
-for i in range(100):
-	T = []
-	for z in range(100):
-		p = random()
-		T.append((p, sin(p)))
-	OR.train(T)
-	print(sin(1), sin(0), sin(0.5))
-	print(i, OR.predict([1]), OR.predict([0]), OR.predict([0.5]))
-print(sin(1), sin(0), sin(0.5))
+if __name__ == "__main__":
+	nn = NeuralNetwork([2, 10, 2])
+	print(nn.predict([12, 0]))
+	print(nn.predict([1, 0]))
