@@ -23,19 +23,26 @@ def within(x, y, l, t, w, h):
 	return False
 
 def keyPressed(key, unicode):
-	global PAUSE
-	if unicode == " ":
-		PAUSE = not PAUSE
-	elif unicode in "qQ":
-		pygame.quit()
-		sys.exit()
-	elif unicode in "rR":
-		global pop
-		pop = Population(len(pop.dots), spawn, goal)
+	if not ISTYPE:
+		global PAUSE
+		if unicode == " ":
+			PAUSE = not PAUSE
+		elif unicode.lower() == "q":
+			pygame.quit()
+			sys.exit()
+		elif unicode.lower() == "r":
+			global pop
+			pop = Population(len(pop.dots), spawn, goal)
+	if ISTYPE:
+		global TYPING
+		if unicode not in ["", ""]:
+			TYPING += unicode
+		elif unicode == "" and len(TYPING) > 0:
+			TYPING = TYPING[:-1]
 def keyHeld(key, unicode, time):
 	pass
-def keyReleased(key, unicode, time):
-	pass
+
+
 
 def mouseClicked(x, y, button):
 	global SELECTION
@@ -72,6 +79,9 @@ def mouseMoved(x, y, dy, dx, button):
 def init():
 	global walls, walls, pop
 	global SELECTION, PAUSE
+	global TYPING, ISTYPE
+	TYPING = ""
+	ISTYPE = False
 	PAUSE = False
 	SELECTION = (0, False)
 	generateSpecies(settings["Species Count"])
@@ -155,6 +165,7 @@ def draw(surface):
 
 
 if __name__ == "__main__":
+
 	## Create the screen
 	size = width, height = 1200, 800
 	SCREENSIZE = PVector(width, height)
@@ -167,6 +178,9 @@ if __name__ == "__main__":
 	mouse.setFunctions(mouseClicked, mouseDragged, mouseMoved, mousePressed, mouseReleased)
 	keysDown = dict()
 	unicodes = dict()
+	## Ignore these 'bad' keys, was a temporary solution to abug
+	#badKeys = [301, 303, 304, 305, 306, 273, 274, 275, 276, 311, 319, 127, 277, 279, 278, 280, 281, 316, 300, 19, 302] + [x for x in range(282, 294)]
+	badKeys = []
 	## Create the timer variables
 	frameRate = 60
 	frameTime = 1/frameRate
@@ -220,18 +234,17 @@ if __name__ == "__main__":
 			if event.type == MOUSEBUTTONUP:
 				mouse.mouseUp(event.pos[0], event.pos[1], event.button)
 			if event.type == KEYDOWN:
-				if event.key in keysDown.keys():
-					if keysDown[event.key] == 0.0:
+				if event.key not in badKeys:
+					if event.key in keysDown.keys():
+						if keysDown[event.key] == 0.0:
+							keysDown[event.key] = time()
+							keyPressed(event.key, event.unicode)
+						else:
+							keyHeld(event.key, event.unicode, time()-keysDown[event.key])
+					else:
 						keysDown[event.key] = time()
 						keyPressed(event.key, event.unicode)
-						unicodes[event.key] = event.unicode.lower()
-					else:
-						keyHeld(event.key, event.unicode, time()-keysDown[event.key])
-				else:
-					keysDown[event.key] = time()
-					keyPressed(event.key, event.unicode)
-					unicodes[event.key] = event.unicode.lower()
 			if event.type == KEYUP:
-				if keysDown[event.key] != 0:
-					keyReleased(event.key, unicodes[event.key], time() - keysDown[event.key])
-					keysDown[event.key] = 0.0
+				if event.key not in badKeys:
+					if keysDown[event.key] != 0:
+						keysDown[event.key] = 0.0
