@@ -1,8 +1,13 @@
 from Species import Brain
 from vector import PVector, dist
-from pygame.draw import circle
+from pygame.draw import circle, line
+import pygame
 from math import radians, degrees
 from random import randint, random
+from colorsys import hsv_to_rgb
+
+def blitText(surface, text, pos, color=(0,0,0), textSize=15, font="Arial"):
+	surface.blit(pygame.font.SysFont(font, textSize).render(text, True, color), pos)
 
 class Dot(object):
 	def __init__(self, spawn):
@@ -16,7 +21,7 @@ class Dot(object):
 		self.angle = self.startingangle
 		self.dead = False
 		self.steps = 0
-		self.sight = PVector(10, 0)
+		self.sight = PVector(20, 0)
 		self.reachedGoal = False
 		self.fitness = 0.0
 		self.mutateMe = False
@@ -27,6 +32,7 @@ class Dot(object):
 		self.pickedColor = (0,0,255)
 		self.bestColor = (0,255,0)
 		self.seeSight = False
+		self.lastSensoryData = {}
 
 	def show(self, surface):
 		if not self.isBest:
@@ -34,16 +40,69 @@ class Dot(object):
 		else:
 			circle(surface, self.bestColor, (int(self.pos.x), int(self.pos.y)), int(self.radius*1.5))
 		if self.seeSight:
-			circle(surface, (255,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle)).x), int(self.pos.y+self.sight.rotate(radians(self.angle)).y)), 2)
-			circle(surface, (255,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle+45)).x), int(self.pos.y+self.sight.rotate(radians(self.angle+45)).y)), 2)
-			circle(surface, (255,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle-45)).x), int(self.pos.y+self.sight.rotate(radians(self.angle-45)).y)), 2)
+
+			circle(surface, (0,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle)).x), int(self.pos.y+self.sight.rotate(radians(self.angle)).y)), 2)
+			circle(surface, (0,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle+45)).x), int(self.pos.y+self.sight.rotate(radians(self.angle+45)).y)), 2)
+			circle(surface, (0,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle-45)).x), int(self.pos.y+self.sight.rotate(radians(self.angle-45)).y)), 2)
 		
 		##circle(surface, (0,255,0), (int(self.pos.x+self.acc.rotate(radians(self.angle)).x), int(self.pos.y+self.acc.rotate(radians(self.angle)).y)), 2)
 		##circle(surface, (0,0,255), (int(self.pos.x+self.vel.rotate(radians(self.angle)).x), int(self.pos.y+self.vel.rotate(radians(self.angle)).y)), 2)
 
-	def showSelection(self, surface):
+	def showSelection(self, surface, globals):
 		w = surface.get_width()
 		h = surface.get_height()
+		blitText(surface, self.speciesString, (5, int(h*0.5)))
+		brainSurface = pygame.Surface((int(w*6/8), int(h*1/4)))
+		brainSurface.fill((0, 0, 0))
+		CPoint = PVector(int(w/2), int(h*1/5))
+		## Draw a bigger dot with orientation and sight info
+		filCol = self.color
+		rad = self.radius*3
+		if self.dead:
+			filCol = (255,0,0)
+			rad = 0.5*rad 
+		if self.isBest:
+			if self.dead:
+				filCol = (255,255,0)
+			else:
+				filCol = (0,255,0)
+		if self.reachedGoal:
+			filCol = (0,0,255)
+		circle(surface, filCol, (int(CPoint.x), int(CPoint.y)), int(rad))
+		if len(self.lastSensoryData.keys()) > 3 and not self.dead:
+			CFront = (0,0,0)
+			CLeft = (0,0,0)
+			CRight = (0,0,0)
+			DFront = (self.sight.rotate(radians(self.angle))*5).abs()
+			DRight = (self.sight.rotate(radians(self.angle-45))*5).abs()
+			DLeft = (self.sight.rotate(radians(self.angle+45))*5).abs()
+			if self.lastSensoryData["FrontVision"][1]:
+				if self.lastSensoryData["FrontVision"][2] == 0:
+					CFront = (255, 0, 0)
+				else:
+					CFront = (0,255,0)
+				DFront = DFront * self.lastSensoryData["FrontVision"][0]
+			if self.lastSensoryData["LeftVision"][1]:
+				if self.lastSensoryData["LeftVision"][2] == 0:
+					CLeft = (255,0,0)
+				else:
+					CLeft = (0,255,0)
+				DLeft = DLeft * self.lastSensoryData["LeftVision"][0]
+			if self.lastSensoryData["RightVision"][1]:
+				if self.lastSensoryData["RightVision"][2] == 0:
+					CRight = (255,0,0)
+				else:
+					CRight = (0,255,0)
+				DRight = DRight * self.lastSensoryData["RightVision"][0]
+			circle(surface, CFront, (CPoint+DFront).integer().toTuple(), 5)
+			circle(surface, CLeft, (CPoint+DLeft).integer().toTuple(), 5)
+			circle(surface, CRight, (CPoint+DRight).integer().toTuple(), 5)
+			line(surface, (255,255,255), CPoint.toTuple(), (CPoint+(PVector((self.brain.getOutputs()[1]-0.2)*(40), 0)).rotate(radians(self.angle+(self.brain.getOutputs()[0]-0.5)))).integer().toTuple(), 3)
+		## Draw color / sizing options
+		## Draw Brain Makeup
+		self.brain.render(brainSurface)
+		surface.blit(brainSurface, (int(w*1/8), int(h*3/5)))
+
 
 	def update(self, sensoryData):
 		## Take in sensory data and create the vector for it
@@ -59,10 +118,11 @@ class Dot(object):
 		self.brain.setInputs(brainInputs)
 		self.brain.run()
 		brainOutputs = self.brain.getOutputs()
+		self.lastSensoryData = sensoryData
 
 
 		## Move the dot based on the output
-		self.angle += degrees((brainOutputs[0]-0.5)*2)
+		self.angle += degrees((brainOutputs[0]-0.5)*5)
 		self.angle = self.angle%360
 		self.acc = PVector(brainOutputs[1]-0.2,0)
 		self.vel += self.acc
@@ -115,6 +175,6 @@ class Dot(object):
 		distToGoal = dist(goal, self.pos)
 		distToSpawn = dist(self.spawn, self.pos)
 		if self.reachedGoal:
-			self.fitness = 5 + 1000.0*(1/(self.steps**4))
+			self.fitness = 1/4 + 1000.0*(1/(self.steps**4))
 		else:
 			self.fitness = 1.0/(distToGoal**2)

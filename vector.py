@@ -14,6 +14,10 @@ class PVector(object):
 	def __sub__(self, otherV):
 		if isinstance(otherV, PVector):
 			return PVector(self.x-otherV.x, self.y-otherV.y)
+
+	def __mul__(self, scalar):
+		return PVector().byMag(self.mag()*scalar, self.angle())
+
 	def mag(self):
 		return sqrt((self.x)**2+(self.y)**2)
 
@@ -25,12 +29,23 @@ class PVector(object):
 			ang = self.angle()
 			self.x = cos(ang)*mag
 			self.y = sin(ang)*mag
+		return self
 
 	def byMag(self, mag, dir):
 		self.x = cos(dir)*mag
 		self.y = sin(dir)*mag
 		return self
 
+	def abs(self):
+		return PVector().byMag(abs(self.mag()), self.angle())
+
+	def toTuple(self):
+		return (self.x, self.y)
+
+	def integer(self):
+		self.x = int(self.x)
+		self.y = int(self.y)
+		return self
 
 	def rotate(self, angle):
 		return PVector().byMag(self.mag(), self.angle()+angle)

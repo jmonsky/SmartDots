@@ -17,9 +17,10 @@ class Population(object):
 		self.fitnessSum = 0
 		self.nextGen = False
 		self.mutationRate = 0.001
-		self.randoPerc = 0.05
+		self.randoPerc = 0.10
 		self.babyPerc = 0.80
 		self.deadGenerations = 0
+		self.generations = []
 
 	def show(self, infoSurface, dotSurface):
 		if self.step/self.maxSteps > 0.25 and self.step/self.maxSteps < 0.30:
@@ -38,6 +39,9 @@ class Population(object):
 		for dot in self.dots:
 			dot.mutate(self.mutationRate)
 
+	def getGenerationData(self):
+		return None
+
 	def naturalSelction(self):
 		winners = 0
 		for i in self.dots:
@@ -45,11 +49,13 @@ class Population(object):
 				winners += 1
 		if winners == 0:
 			self.deadGenerations += 1
-
 			if self.deadGenerations > 2:
 				self.maxSteps += 50
-			self.randoPerc += 0.001
-			self.babyPerc -= 0.01
+			if self.deadGenerations > 3:
+				self.mutationRate += 0.00005
+			if self.deadGenerations > 5:
+				self.randoPerc += 0.001
+				self.babyPerc -= 0.005
 		else:
 			winPerc = (winners+0.0)/len(self.dots)
 			self.deadGenerations = 0
@@ -58,7 +64,7 @@ class Population(object):
 			if winPerc > 0.15:
 				self.mutationRate -= 0.00005
 			if winPerc > 0.20:
-				self.babyPerc += 0.001
+				self.babyPerc += 0.005
 
 		self.getFitness()
 		newDots = []
@@ -114,6 +120,14 @@ class Population(object):
 				return False
 		return True
 
+	def clickDot(self, x , y):
+		m = PVector(x,y)
+		for x,dot in enumerate(self.dots):
+			if dist(dot.pos, m) < dot.radius*2:
+				return x
+		else:
+			return None
+
 	def update(self, walls):
 		if self.step < self.maxSteps and not self.allDotsDead():
 			for dot in self.dots:
@@ -141,7 +155,7 @@ class Population(object):
 
 					sensoryData["Velocity"] = dot.vel.mag()/5.0
 					sensoryData["Rotation"] = dot.angle/360.0
-					sensoryData["DegreesToGoal"] = atan2(self.goal.y-dot.pos.y, self.goal.x-dot.pos.x)
+					sensoryData["DegreesToGoal"] = (atan2(self.goal.y-dot.pos.y, self.goal.x-dot.pos.x)-dot.angle)/360.0
 					sensoryData["Time"] = self.step/self.maxSteps
 					dot.update(sensoryData)
 					if dot.steps > self.maxSteps:

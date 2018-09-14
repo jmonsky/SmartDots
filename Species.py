@@ -1,5 +1,8 @@
 from NeuralNetwork import NeuralNetwork
 from random import choice
+from pygame.draw import circle
+import numpy as np
+from colorsys import hsv_to_rgb
 
 species = []
 maxSpecies = 10
@@ -7,6 +10,7 @@ inputs = 13
 outputs = 2
 layers = range(1, 6)
 layerSizes = range(2, 15)
+
 
 def generateSpecies(num):
 	global species
@@ -29,6 +33,20 @@ class Brain(object):
 
 	def __add__(self, otherBrain):
 		pass
+
+	def render(self, surface):
+		w = surface.get_width()
+		h = surface.get_height()
+		for l in self.network.weights:
+			rows = len(l)
+			hgap = int(w/(rows + 1))
+			for row,p in enumerate(l):
+				columns = len(p)
+				vgap = int(w/(columns+1))
+				for column,s in enumerate(p):
+					C =  hsv_to_rgb(abs(s), 1, 1)
+					circle(surface, (int(C[0]*255), int(C[1]*255), int(C[2]*255)), (hgap*(row+1),vgap*(column+1)), 2)
+
 
 	def mutate(self, mr):
 		self.network.mutate(mr)

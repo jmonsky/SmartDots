@@ -16,55 +16,91 @@ def setIcon(R, G, B):
 def blitText(surface, text, pos, color=(0,0,0), textSize=15, font="Arial"):
 	surface.blit(pygame.font.SysFont(font, textSize).render(text, True, color), pos)
 
+def within(x, y, l, t, w, h):
+	if x > l and x < l+w:
+		if y > t and y < t+h:
+			return True
+	return False
 
 def keyPressed(key, unicode):
-	pass
+	global PAUSE
+	if unicode == " ":
+		PAUSE = not PAUSE
+	elif unicode in "qQ":
+		pygame.quit()
+		sys.exit()
+	elif unicode in "rR":
+		global pop
+		pop = Population(len(pop.dots), spawn, goal)
 def keyHeld(key, unicode, time):
 	pass
 def keyReleased(key, unicode, time):
 	pass
 
 def mouseClicked(x, y, button):
-	pass
+	global SELECTION
+	if within(x,y,200,0,int((width - 200)*3/4),int(height*5/6)):
+		if button == 1:
+			c = pop.clickDot(x-200,y)
+			if c != None:
+				SELECTION = (c, True)
+			else:
+				SELECTION = (0, False)
+		elif button == 3:
+			SELECTION = (0, False)
+	if within(x,y,200+int((width - 200)*3/4),0,width-200-int((width - 200)*3/4),int(height*5/6)):
+		x = x-200-int((width - 200)*3/4)
+		if dist(PVector(125, int(height*5/6)-10), PVector(x,y)) < 7:
+			SELECTION = (randint(0, len(pop.dots)-1), True)
 def mouseDragged(drag, button):
-	st = PVector(drag[0][0]-200, drag[0][1])
-	sp = PVector(drag[1][0]-200, drag[1][1])
-	if st.x > 0 and st.x < int((width - 200)*3/4) and st.y > 0 and st.y < int(height*5/6):
-		if sp.x > 0 and sp.x < int((width - 200)*3/4) and sp.y > 0 and sp.y < int(height*5/6): 
-			walls.append((st, sp))
+	if button == 3:
+		st = PVector(drag[0][0]-200, drag[0][1])
+		sp = PVector(drag[1][0]-200, drag[1][1])
+		if st.x > 0 and st.x < int((width - 200)*3/4) and st.y > 0 and st.y < int(height*5/6):
+			if sp.x > 0 and sp.x < int((width - 200)*3/4) and sp.y > 0 and sp.y < int(height*5/6): 
+				walls.append((st, sp))
 def mouseReleased(x, y, button):
 	pass
 def mousePressed(x, y, button):
-	pass
+	if button == 6:
+		if len(walls) > 0:
+			walls.pop()
 def mouseMoved(x, y, dy, dx, button):
 	pass
 
 
 def init():
 	global walls, walls, pop
+	global SELECTION, PAUSE
+	PAUSE = False
+	SELECTION = (0, False)
 	generateSpecies(settings["Species Count"])
 	global spawn, goal 
 	W = int((width - 200)*3/4)
 	H = int(height*5/6)
 	spawn = PVector(W/2, H-50)
 	goal = PVector(W/2, 50)
-	pop = Population(1000, spawn, goal)
+	pop = Population(200, spawn, goal)
 	walls = []
 
 
 def run():
-	## Create Imaginary walls along the border of the map to kill off idiots
-	w = walls.copy()
-	w.append([PVector(0,0), PVector(int((width - 200)*3/4), 0)])
-	w.append([PVector(0,0), PVector(0,int(height*5/6))])
-	w.append([PVector(int((width - 200)*3/4),0), PVector(int((width - 200)*3/4),int(height*5/6))])
-	w.append([PVector(0,int(height*5/6)), PVector(int((width - 200)*3/4),int(height*5/6))])
-	## Run the update on the population
-	pop.update(w)
-	## Check if its time to move to the next generation
-	if pop.nextGen:
-		pop.naturalSelction()
-		pop.mutateDemBabies()
+	if not PAUSE:
+		## Create Imaginary walls along the border of the map to kill off idiots
+		w = walls.copy()
+		w.append([PVector(0,0), PVector(int((width - 200)*3/4), 0)])
+		w.append([PVector(0,0), PVector(0,int(height*5/6))])
+		w.append([PVector(int((width - 200)*3/4),0), PVector(int((width - 200)*3/4),int(height*5/6))])
+		w.append([PVector(0,int(height*5/6)), PVector(int((width - 200)*3/4),int(height*5/6))])
+		## Run the update on the population
+
+		pop.update(w)
+		## Check if its time to move to the next generation
+		if pop.nextGen:
+			global SELECTION
+			SELECTION = (0, False)
+			pop.naturalSelction()
+			pop.mutateDemBabies()
 
 def draw(surface):
 	## Cut up the screen
@@ -83,21 +119,32 @@ def draw(surface):
 	ControlSurface.fill((0,255,0))
 	DrawSurface.fill((255,255,255))
 	MapEditSurface.fill((0,0,255))
-	InfoSurface.fill((255,0,255))
+	InfoSurface.fill((150,150,150))
 	surface.fill((0,0,0))
 	## Draw the Dots
 	pop.show(InfoSurface, DrawSurface)
 
 	## Draw the obstacles
 	for w in walls:
-		pygame.draw.line(DrawSurface, (0,0,255), w[0], w[1], 2)
+		pygame.draw.line(DrawSurface, (0,0,255), w[0], w[1], 4)
 	## Draw the goal and spawn
 	pygame.draw.circle(DrawSurface, (255,0,0), (int(goal.x), int(goal.y)), 5)
 	pygame.draw.circle(DrawSurface, (0,0,255), (int(spawn.x), int(spawn.y)), 5)
 	## Draw the Overlay
 	
-	
+	if SELECTION[1]:
+		pop.dots[SELECTION[0]].showSelection(InfoSurface, (PAUSE, True))
+	STRINGSTACK = [
+		 "Select Random Dot:",
+		 "Mutation Rate: %.2f%%" % (pop.mutationRate*100),
+		 "Babys: %.2f%%" % (pop.babyPerc*100),
+		 "Randoms: %.2f%%" % (pop.randoPerc*100),
+		 "Survivors: %.2f%%" % ((1-pop.babyPerc-pop.randoPerc)*100)
 
+	]
+	pygame.draw.circle(InfoSurface, (120, 180, 180), (125, height1-10), 7)
+	for i in range(len(STRINGSTACK)):
+		blitText(InfoSurface, STRINGSTACK[i], (5, height1-15*(i+1)-5))
 	## Blit the surfaces to the screen
 	surface.blit(StatSurface, (0, height1))
 	surface.blit(ControlSurface, (statWidth, height1))
@@ -128,10 +175,11 @@ if __name__ == "__main__":
 	runTime = 1/runRate
 	lRun = 0
 	## Create Settings Variable
-	settings = {"Species Count":20}
+	settings = {"Species Count":50}
 
 	## Run the init function
 	init()
+	setIcon(0,255,0)
 	while 1:
 		## Run the clock stuff
 		if abs(time() - lRun) > runTime:
