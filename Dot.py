@@ -2,7 +2,7 @@ from Species import Brain
 from vector import PVector, dist
 from pygame.draw import circle
 from math import radians, degrees
-from random import randint
+from random import randint, random
 
 class Dot(object):
 	def __init__(self, spawn):
@@ -26,13 +26,18 @@ class Dot(object):
 		self.color = (0,0,0)
 		self.pickedColor = (0,0,255)
 		self.bestColor = (0,255,0)
+		self.seeSight = False
 
 	def show(self, surface):
 		if not self.isBest:
 			circle(surface, self.color, (int(self.pos.x), int(self.pos.y)), self.radius)
 		else:
 			circle(surface, self.bestColor, (int(self.pos.x), int(self.pos.y)), int(self.radius*1.5))
-		circle(surface, (255,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle)).x), int(self.pos.y+self.sight.rotate(radians(self.angle)).y)), 2)
+		if self.seeSight:
+			circle(surface, (255,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle)).x), int(self.pos.y+self.sight.rotate(radians(self.angle)).y)), 2)
+			circle(surface, (255,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle+45)).x), int(self.pos.y+self.sight.rotate(radians(self.angle+45)).y)), 2)
+			circle(surface, (255,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle-45)).x), int(self.pos.y+self.sight.rotate(radians(self.angle-45)).y)), 2)
+		
 		##circle(surface, (0,255,0), (int(self.pos.x+self.acc.rotate(radians(self.angle)).x), int(self.pos.y+self.acc.rotate(radians(self.angle)).y)), 2)
 		##circle(surface, (0,0,255), (int(self.pos.x+self.vel.rotate(radians(self.angle)).x), int(self.pos.y+self.vel.rotate(radians(self.angle)).y)), 2)
 
@@ -87,6 +92,9 @@ class Dot(object):
 		if self.mutateMe:
 			self.brain.mutate(mr)
 			self.mutateMe = False
+			if random() > mr:
+				self.startingangle += randint(-10, 10)
+				self.angle = self.startingangle
 
 	def gimmieBaby(self):
 		baby = self.copy()
@@ -94,6 +102,8 @@ class Dot(object):
 		baby.species = self.species
 		baby.speciesString = self.speciesString
 		baby.setParent(self)
+		baby.startingangle = self.startingangle
+		baby.angle = self.startingangle
 		return baby
 
 	def __add__(self, otherDot):
@@ -105,6 +115,6 @@ class Dot(object):
 		distToGoal = dist(goal, self.pos)
 		distToSpawn = dist(self.spawn, self.pos)
 		if self.reachedGoal:
-			self.fitness = 1000.0*(1/(self.steps**2))
+			self.fitness = 5 + 1000.0*(1/(self.steps**4))
 		else:
 			self.fitness = 1.0/(distToGoal**2)

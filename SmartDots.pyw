@@ -48,7 +48,7 @@ def init():
 	H = int(height*5/6)
 	spawn = PVector(W/2, H-50)
 	goal = PVector(W/2, 50)
-	pop = Population(200, spawn, goal)
+	pop = Population(1000, spawn, goal)
 	walls = []
 
 
@@ -124,7 +124,7 @@ if __name__ == "__main__":
 	frameRate = 60
 	frameTime = 1/frameRate
 	lFrame = 0
-	runRate = 1000
+	runRate = 60
 	runTime = 1/runRate
 	lRun = 0
 	## Create Settings Variable

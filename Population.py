@@ -19,6 +19,7 @@ class Population(object):
 		self.mutationRate = 0.001
 		self.randoPerc = 0.05
 		self.babyPerc = 0.80
+		self.deadGenerations = 0
 
 	def show(self, infoSurface, dotSurface):
 		if self.step/self.maxSteps > 0.25 and self.step/self.maxSteps < 0.30:
@@ -42,12 +43,30 @@ class Population(object):
 		for i in self.dots:
 			if i.reachedGoal:
 				winners += 1
+		if winners == 0:
+			self.deadGenerations += 1
+
+			if self.deadGenerations > 2:
+				self.maxSteps += 50
+			self.randoPerc += 0.001
+			self.babyPerc -= 0.01
+		else:
+			winPerc = (winners+0.0)/len(self.dots)
+			self.deadGenerations = 0
+			if winPerc > 0.05:
+				self.randoPerc -= 0.001
+			if winPerc > 0.15:
+				self.mutationRate -= 0.00005
+			if winPerc > 0.20:
+				self.babyPerc += 0.001
 
 		self.getFitness()
 		newDots = []
 		bestDot = self.getBest().exactCopy()
-		if bestDot.reachedGoal:
-			self.maxSteps = bestDot.steps
+		if self.getBest().reachedGoal:
+			if self.getBest().steps < self.maxSteps:
+				self.maxSteps = self.getBest().steps
+
 		randos = int(self.randoPerc * len(self.dots))
 		babies = int(self.babyPerc * len(self.dots))
 		survivors = len(self.dots) - randos - babies - 1
@@ -63,15 +82,13 @@ class Population(object):
 		self.nextGen = False
 		self.step = 0 
 		self.dots[0].isBest = True
-		print(self.dots[0].speciesString)
+
 
 	def getBest(self):
 		best = self.dots[0]
 		for dot in self.dots:
 			if dot.fitness > best.fitness:
 				best = dot
-		print(best.speciesString)
-		print(best.fitness)
 		return best
 
 
@@ -83,11 +100,13 @@ class Population(object):
 
 	def getParent(self):
 		runningSum = 0.0
+		rand = random()*self.fitnessSum
 		for i in self.dots:
 			runningSum += i.fitness
-			if runningSum < random():
+			if runningSum > rand:
 				return i
-		return self.getBest()
+		print("FUCK", runningSum)
+		return self.getParent()
 
 	def allDotsDead(self):
 		for i in self.dots:
