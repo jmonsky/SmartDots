@@ -23,6 +23,7 @@ class Dot(object):
 		self.steps = 0
 		self.sight = PVector(20, 0)
 		self.reachedGoal = False
+		self.goalsReached = 0
 		self.fitness = 0.0
 		self.mutateMe = False
 		self.spawn = spawn

@@ -8,6 +8,17 @@ from colorsys import hsv_to_rgb
 from Species import generateSpecies
 from Population import Population
 
+"""
+TODOS:
+
+
+CREATE A WAY TO SET GOALS UP TO MOVE
+EXPORT A NN OF A BRAIN OF A DESIRED DOT
+
+
+"""
+
+
 def setIcon(R, G, B):
 	icon = pygame.Surface((32, 32))
 	icon.fill((R,G,B))
@@ -26,7 +37,12 @@ def keyPressed(key, unicode):
 	if not ISTYPE:
 		global PAUSE
 		if unicode == " ":
-			PAUSE = not PAUSE
+			if PAUSE:
+				PAUSE = False
+				setIcon(0,255,0)
+			else:
+				PAUSE = True
+				setIcon(0,255,255)
 		elif unicode.lower() == "q":
 			pygame.quit()
 			sys.exit()
