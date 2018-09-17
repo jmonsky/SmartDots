@@ -16,6 +16,12 @@ REMOVE GOAL SYSTEM AND GRADE BASED ON DISTANCE OBTAINED
 FIND A WAY TO MEASURE A "GOOD" DISTANCE
 BASICALLY LAPS AROUND A TRACK
 
+TO DO THIS I NEED TO:
+	- Remove goals from the population class / fitness functions
+	- Remove goals from the nerual network input and just have pure vision
+	- Remove time from neural network input
+
+
 ADD TRACK DESIGNER / SAVER
 EXPORT A NN OF A BRAIN OF A DESIRED DOT
 
