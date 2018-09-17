@@ -12,7 +12,11 @@ from Population import Population
 TODOS:
 
 
-CREATE A WAY TO SET GOALS UP TO MOVE
+REMOVE GOAL SYSTEM AND GRADE BASED ON DISTANCE OBTAINED
+FIND A WAY TO MEASURE A "GOOD" DISTANCE
+BASICALLY LAPS AROUND A TRACK
+
+ADD TRACK DESIGNER / SAVER
 EXPORT A NN OF A BRAIN OF A DESIRED DOT
 
 
@@ -48,7 +52,7 @@ def keyPressed(key, unicode):
 			sys.exit()
 		elif unicode.lower() == "r":
 			global pop
-			pop = Population(len(pop.dots), spawn, goal)
+			pop = Population(len(pop.dots), spawn, goals)
 	if ISTYPE:
 		global TYPING
 		if unicode not in ["", ""]:
@@ -71,6 +75,14 @@ def mouseClicked(x, y, button):
 				SELECTION = (0, False)
 		elif button == 3:
 			SELECTION = (0, False)
+		elif button == 2:
+			if 304 not in keysDown.keys():
+				keysDown[304] = 0
+			if keysDown[304] != 0.0:
+				goals.insert(0, PVector(x-200, y))
+			else:
+				goals.append(PVector(x-200, y))
+			pop.updateGoals(goals)
 	if within(x,y,200+int((width - 200)*3/4),0,width-200-int((width - 200)*3/4),int(height*5/6)):
 		x = x-200-int((width - 200)*3/4)
 		if dist(PVector(125, int(height*5/6)-10), PVector(x,y)) < 7:
@@ -96,6 +108,7 @@ def init():
 	global walls, walls, pop
 	global SELECTION, PAUSE
 	global TYPING, ISTYPE
+	global goals
 	TYPING = ""
 	ISTYPE = False
 	PAUSE = False
@@ -105,8 +118,8 @@ def init():
 	W = int((width - 200)*3/4)
 	H = int(height*5/6)
 	spawn = PVector(W/2, H-50)
-	goal = PVector(W/2, 50)
-	pop = Population(200, spawn, goal)
+	goals = [PVector(W/2, 50)]
+	pop = Population(50, spawn, goals)
 	walls = []
 
 
@@ -154,12 +167,14 @@ def draw(surface):
 	for w in walls:
 		pygame.draw.line(DrawSurface, (0,0,255), w[0], w[1], 4)
 	## Draw the goal and spawn
-	pygame.draw.circle(DrawSurface, (255,0,0), (int(goal.x), int(goal.y)), 5)
+	for goal in goals:
+		pygame.draw.circle(DrawSurface, (255,0,0), (int(goal.x), int(goal.y)), 5)
 	pygame.draw.circle(DrawSurface, (0,0,255), (int(spawn.x), int(spawn.y)), 5)
 	## Draw the Overlay
 	
 	if SELECTION[1]:
 		pop.dots[SELECTION[0]].showSelection(InfoSurface, (PAUSE, True))
+		pop.dots[SELECTION[0]].showGoal(goals, DrawSurface)
 	STRINGSTACK = [
 		 "Select Random Dot:",
 		 "Mutation Rate: %.2f%%" % (pop.mutationRate*100),
@@ -201,7 +216,7 @@ if __name__ == "__main__":
 	frameRate = 60
 	frameTime = 1/frameRate
 	lFrame = 0
-	runRate = 60
+	runRate = 120
 	runTime = 1/runRate
 	lRun = 0
 	## Create Settings Variable

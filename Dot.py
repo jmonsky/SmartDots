@@ -22,7 +22,7 @@ class Dot(object):
 		self.dead = False
 		self.steps = 0
 		self.sight = PVector(20, 0)
-		self.reachedGoal = False
+		self.allGoalsReached = False
 		self.goalsReached = 0
 		self.fitness = 0.0
 		self.mutateMe = False
@@ -33,7 +33,9 @@ class Dot(object):
 		self.pickedColor = (0,0,255)
 		self.bestColor = (0,255,0)
 		self.seeSight = False
+		self.closestDist = 10000
 		self.lastSensoryData = {}
+		self.deathBy = "None"
 
 	def show(self, surface):
 		if not self.isBest:
@@ -41,13 +43,14 @@ class Dot(object):
 		else:
 			circle(surface, self.bestColor, (int(self.pos.x), int(self.pos.y)), int(self.radius*1.5))
 		if self.seeSight:
-
 			circle(surface, (0,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle)).x), int(self.pos.y+self.sight.rotate(radians(self.angle)).y)), 2)
 			circle(surface, (0,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle+45)).x), int(self.pos.y+self.sight.rotate(radians(self.angle+45)).y)), 2)
 			circle(surface, (0,0,0), (int(self.pos.x+self.sight.rotate(radians(self.angle-45)).x), int(self.pos.y+self.sight.rotate(radians(self.angle-45)).y)), 2)
-		
 		##circle(surface, (0,255,0), (int(self.pos.x+self.acc.rotate(radians(self.angle)).x), int(self.pos.y+self.acc.rotate(radians(self.angle)).y)), 2)
 		##circle(surface, (0,0,255), (int(self.pos.x+self.vel.rotate(radians(self.angle)).x), int(self.pos.y+self.vel.rotate(radians(self.angle)).y)), 2)
+
+	def showGoal(self, goals, surface):
+		circle(surface, (255,255,0), goals[self.goalsReached].integer().toTuple(), 4)
 
 	def showSelection(self, surface, globals):
 		w = surface.get_width()
@@ -67,8 +70,6 @@ class Dot(object):
 				filCol = (255,255,0)
 			else:
 				filCol = (0,255,0)
-		if self.reachedGoal:
-			filCol = (0,0,255)
 		circle(surface, filCol, (int(CPoint.x), int(CPoint.y)), int(rad))
 		if len(self.lastSensoryData.keys()) > 3 and not self.dead:
 			CFront = (0,0,0)
@@ -172,10 +173,17 @@ class Dot(object):
 		baby.brain = self.brain + otherDot.brain
 		return baby
 
-	def findFitness(self, goal):
-		distToGoal = dist(goal, self.pos)
+	def findFitness(self, goals):
+		distToNextGoal = dist(goals[self.goalsReached], self.pos)
 		distToSpawn = dist(self.spawn, self.pos)
-		if self.reachedGoal:
-			self.fitness = 1/4 + 1000.0*(1/(self.steps**4))
-		else:
-			self.fitness = 1.0/(distToGoal**2)
+		self.fitness = 0
+		self.fitness += 2.0*(1.0/(self.closestDist**2)) + 1.0/(distToNextGoal**2)
+		self.fitness += self.goalsReached
+		if self.deathBy == "LastGoal" or self.allGoalsReached:
+			self.fitness *= 5
+		elif self.deathBy == "Wall":
+			self.fitness *= 0.001
+		elif self.deathBy == "Circle Of Death":
+			self.fitness *= 0
+		elif self.deathBy == "Time":
+			self.fitness *= 0.5

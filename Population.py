@@ -5,13 +5,13 @@ from random import random
 import pygame.draw
 
 class Population(object):
-	def __init__(self, size, spawnPoint, goal):
+	def __init__(self, size, spawnPoint, goals):
 		self.dots = []
 		self.spawnPoint = spawnPoint
 		for i in range(size):
 			self.dots.append(Dot(spawnPoint))
 		self.generation = 0
-		self.goal = goal
+		self.goals = goals
 		self.maxSteps = 200
 		self.step = 0
 		self.fitnessSum = 0
@@ -24,10 +24,12 @@ class Population(object):
 
 	def show(self, infoSurface, dotSurface):
 		if self.step/self.maxSteps > 0.25 and self.step/self.maxSteps < 0.30:
-			pygame.draw.circle(dotSurface, (255, 120, 120), (int(self.spawnPoint.x), int(self.spawnPoint.y)), int(dist(self.goal, self.spawnPoint)*0.15))
+			pygame.draw.circle(dotSurface, (255, 120, 120), (int(self.spawnPoint.x), int(self.spawnPoint.y)), int(dist(self.goals[0], self.spawnPoint)*0.15))
 		for dot in self.dots:
 			dot.show(dotSurface)
 		
+	def updateGoals(self, newGoals):
+		self.goals = newGoals
 
 	def updateEndpoints(self, spawn, goal):
 		self.spawnPoint = spawn
@@ -45,15 +47,15 @@ class Population(object):
 	def naturalSelction(self):
 		winners = 0
 		for i in self.dots:
-			if i.reachedGoal:
+			if i.goalsReached > 0:
 				winners += 1
 		if winners == 0:
 			self.deadGenerations += 1
-			if self.deadGenerations > 2:
+			if self.deadGenerations%2 == 0:
 				self.maxSteps += 50
-			if self.deadGenerations > 3:
+			if self.deadGenerations%3 == 0:
 				self.mutationRate += 0.00005
-			if self.deadGenerations > 5:
+			if self.deadGenerations%5 == 0:
 				self.randoPerc += 0.001
 				self.babyPerc -= 0.005
 		else:
@@ -69,9 +71,8 @@ class Population(object):
 		self.getFitness()
 		newDots = []
 		bestDot = self.getBest().exactCopy()
-		if self.getBest().reachedGoal:
-			if self.getBest().steps < self.maxSteps:
-				self.maxSteps = self.getBest().steps
+		if self.getBest().allGoalsReached:
+			self.maxSteps = self.getBest().steps
 
 		randos = int(self.randoPerc * len(self.dots))
 		babies = int(self.babyPerc * len(self.dots))
@@ -101,7 +102,7 @@ class Population(object):
 	def getFitness(self):
 		self.fitnessSum = 0.0
 		for dot in self.dots:
-			dot.findFitness(self.goal)
+			dot.findFitness(self.goals)
 			self.fitnessSum += dot.fitness 
 
 	def getParent(self):
@@ -132,6 +133,8 @@ class Population(object):
 		if self.step < self.maxSteps and not self.allDotsDead():
 			for dot in self.dots:
 				if not dot.dead:
+					if dist(self.goals[dot.goalsReached], dot.pos) < dot.closestDist:
+						dot.closestDist = dist(self.goals[dot.goalsReached], dot.pos)
 					sensoryData = {}
 					sensoryData["LeftVision"] = [0, 0, 0.5]
 					sensoryData["FrontVision"] = [0, 0, 0.5]
@@ -146,26 +149,31 @@ class Population(object):
 								sensoryData["LeftVision"] = [findDist(dot.pos, wall)/dot.sight.mag(), 1, 0]
 							if intersect(dot.pos, dot.pos+dot.sight.rotate(radians(dot.angle-45)), wall[0], wall[1]):
 								sensoryData["RightVision"] = [findDist(dot.pos, wall)/dot.sight.mag(), 1, 0]
-					if intersect(dot.pos, dot.pos+dot.sight.rotate(radians(dot.angle-45)), self.goal+PVector(5,0), self.goal-PVector(5,0)):
-						sensoryData["RightVision"] = [dist(dot.pos, self.goal)/dot.sight.mag(), 1, 1]
-					if intersect(dot.pos, dot.pos+dot.sight.rotate(radians(dot.angle)), self.goal+PVector(5,0), self.goal-PVector(5,0)):
-						sensoryData["FrontVision"] = [dist(dot.pos, self.goal)/dot.sight.mag(), 1, 1]
-					if intersect(dot.pos, dot.pos+dot.sight.rotate(radians(dot.angle+45)), self.goal+PVector(5,0), self.goal-PVector(5,0)):
-						sensoryData["LeftVision"] = [dist(dot.pos, self.goal)/dot.sight.mag(), 1, 1]
+					if intersect(dot.pos, dot.pos+dot.sight.rotate(radians(dot.angle-45)), self.goals[dot.goalsReached]+PVector(5,0), self.goals[dot.goalsReached]-PVector(5,0)):
+						sensoryData["RightVision"] = [dist(dot.pos, self.goals[dot.goalsReached])/dot.sight.mag(), 1, 1]
+					if intersect(dot.pos, dot.pos+dot.sight.rotate(radians(dot.angle)), self.goals[dot.goalsReached]+PVector(5,0), self.goals[dot.goalsReached]-PVector(5,0)):
+						sensoryData["FrontVision"] = [dist(dot.pos, self.goals[dot.goalsReached])/dot.sight.mag(), 1, 1]
+					if intersect(dot.pos, dot.pos+dot.sight.rotate(radians(dot.angle+45)), self.goals[dot.goalsReached]+PVector(5,0), self.goals[dot.goalsReached]-PVector(5,0)):
+						sensoryData["LeftVision"] = [dist(dot.pos, self.goals[dot.goalsReached])/dot.sight.mag(), 1, 1]
 
 					sensoryData["Velocity"] = dot.vel.mag()/5.0
 					sensoryData["Rotation"] = dot.angle/360.0
-					sensoryData["DegreesToGoal"] = (atan2(self.goal.y-dot.pos.y, self.goal.x-dot.pos.x)-dot.angle)/360.0
+					sensoryData["DegreesToGoal"] = (atan2(self.goals[dot.goalsReached].y-dot.pos.y, self.goals[dot.goalsReached].x-dot.pos.x)-dot.angle)/360.0
 					sensoryData["Time"] = self.step/self.maxSteps
 					dot.update(sensoryData)
 					if dot.steps > self.maxSteps:
 						dot.dead = True
-					if dist(self.goal, dot.pos) < 5:
-						dot.dead = True
-						dot.reachedGoal = True
-					if self.step/self.maxSteps > 0.25 and self.step/self.maxSteps < 0.30:
-						if dist(dot.pos, self.spawnPoint) < 0.15*dist(self.spawnPoint, self.goal):
+						dot.deathBy = "Time"
+					if dist(self.goals[dot.goalsReached], dot.pos) < 5:
+						dot.goalsReached += 1
+						if dot.goalsReached >= len(self.goals):
 							dot.dead = True
+							dot.allGoalsReached = True
+							dot.deathBy = "Last Goal"
+					if self.step/self.maxSteps > 0.25 and self.step/self.maxSteps < 0.30:
+						if dist(dot.pos, self.spawnPoint) < 0.15*dist(self.spawnPoint, self.goals[0]):
+							dot.dead = True
+							dot.deathBy = "Circle of Death"
 			
 			self.step += 1
 		else:
