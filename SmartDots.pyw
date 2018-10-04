@@ -125,7 +125,7 @@ def init():
 	H = int(height*5/6)
 	spawn = PVector(W/2, H-50)
 	goals = [PVector(W/2, 50)]
-	pop = Population(50, spawn, goals)
+	pop = Population(200, spawn, goals)
 	walls = []
 
 

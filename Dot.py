@@ -174,7 +174,10 @@ class Dot(object):
 		return baby
 
 	def findFitness(self, goals):
-		distToNextGoal = dist(goals[self.goalsReached], self.pos)
+		if self.goalsReached >= len(goals):
+			distToNextGoal = 5
+		else:
+			distToNextGoal = dist(goals[self.goalsReached], self.pos)
 		distToSpawn = dist(self.spawn, self.pos)
 		self.fitness = 0
 		self.fitness += 2.0*(1.0/(self.closestDist**2)) + 1.0/(distToNextGoal**2)
